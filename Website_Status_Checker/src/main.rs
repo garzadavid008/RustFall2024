@@ -4,28 +4,35 @@ mod monitor;
 
 use config::Config;
 use monitor::monitor_websites;
+use std::fs::File;
+use std::io::{BufRead, BufReader};
 use std::time::Duration;
 
+fn load_into_vec() -> Vec<String> {
+    let mut result = Vec::new();
+    let file = File::open("links.txt").unwrap();
+    let content = BufReader::new(file);
+
+    for line in content.lines() {
+        if let Ok(url) = line {
+            result.push(url);
+        }
+    }
+    result
+}
+
 fn main() {
-    // Step 1: Read Configuration
     let config = Config {
-        timeout: Duration::from_secs(5), // Timeout for each request
-        retries: 3,                      // Number of retries for failed requests
-        num_threads: 4,                  // Number of worker threads
+        timeout: Duration::from_secs(5), 
+        retries: 3,                    
+        num_threads: 4,                  
     };
 
-    // Step 2: Define URLs to Monitor
-    let urls = vec![
-        "https://www.google.com".to_string(),
-        "https://www.rust-lang.org".to_string(),
-        "https://nonexistent.website".to_string(),
-    ];
+    let urls = load_into_vec();
 
-    // Step 3: Perform Monitoring
     println!("Starting website monitoring...");
     let results = monitor_websites(urls, config);
 
-    // Step 4: Display Results
     println!("\nMonitoring Results:");
     for result in results {
         match result.status {

@@ -5,14 +5,6 @@ use std::time::Duration;
 use crate::config::WebsiteStatus;
 use crate::monitor::check_website;
 
-/// Spawns a thread pool to handle website monitoring jobs.
-///
-/// # Parameters
-/// - `num_threads`: Number of worker threads to spawn.
-/// - `job_receiver`: Shared receiver for fetching jobs.
-/// - `result_sender`: Sender to return `WebsiteStatus` to the main thread.
-/// - `timeout`: Timeout duration for HTTP requests.
-/// - `retries`: Maximum number of retries for each website.
 pub fn create_thread_pool(
     num_threads: usize,
     job_receiver: Arc<Mutex<mpsc::Receiver<String>>>,
@@ -33,16 +25,14 @@ pub fn create_thread_pool(
                 let result = loop {
                     let status = check_website(&url, timeout);
 
-                    // Stop retrying on success or after exhausting retries
                     if status.status.is_ok() || attempts >= retries {
                         break status;
                     }
                     attempts += 1;
                 };
 
-                // Send the result back to the main thread
                 if result_sender.send(result).is_err() {
-                    break; // Exit if the main thread is no longer listening
+                    break; 
                 }
             }
         });
